@@ -2,7 +2,7 @@ import threading
 import socket
 
 #-----------------------------------------------------------------------
-host = '127.0.0.1'
+host = '0.0.0.0'
 port = 55555
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #socket.socket(socket.AF_INET, socket.SOCK_STREAM)???
@@ -19,7 +19,7 @@ def broadcast(message):
 def handle(client):
     while True:
         try:
-            msg = message = client.recv(1024)#memory of text per send???
+            msg = message = client.recv(1024)#memory of text per send???/ memory to allocate to the client for text??
             if msg.decode('ascii').startswith('KICK'):
                 if nicknames[clients.index(client)] == 'admin':
                     name_to_kick = msg.decode('ascii')[5:]
