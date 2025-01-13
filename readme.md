@@ -16,6 +16,9 @@ This project is a simple TCP chat application that allows multiple clients to co
 - `TCP_Chat.md`: A flowchart representation of the chat application's workflow.
 
 ## How to Run
+Use the command prompt for accessing the files:
+Download the project by zip and unpack it in whatever location you want, open mupltiple cmd's one for the server and x for how many clients you want to have, in each cmd navigate to the folder, using "(Drive where the folder is):" and "cd folder" to navigate to the folder or folders where the project is located and print "Server.py" for the server and "Client.py" for the client, in each cmd respectively.
+
 1. Start the server:
    ```bash
    python server.py
@@ -35,4 +38,4 @@ This project is a simple TCP chat application that allows multiple clients to co
 - Basic understanding of TCP sockets and threading in Python.
 
 ## License
-This project is open-source and available for modification and distribution.
+MIT License  Copyright (c) 2025 Eldar Nedria
