@@ -1,59 +1,65 @@
 import socket
 import threading
 
-nickname = input("Enter your nickname: ")
-if nickname == "admin":
-    password = input("Enter password for admin account: ")
+class Client:
+    def __init__(self):
+        self.nickname = input("Enter your nickname: ")
+        self.password = None
+        if self.nickname == "admin":
+            self.password = input("Enter password for admin account: ")
+        
+        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client.connect(('127.0.0.1', 55555))
+        self.stop_thread = False
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(('127.0.0.1', 55555))
+    def receive(self):
+        while True:
+            if self.stop_thread:
+                break
+            try:
+                message = self.client.recv(1024).decode('ascii')
+                if message == 'NICK':
+                    self.client.send(self.nickname.encode('ascii'))
+                    next_message = self.client.recv(1024).decode('ascii')
+                    if next_message == 'PASS':
+                        self.client.send(self.password.encode('ascii'))
+                        if self.client.recv(1024).decode('ascii') == 'REFUSE':
+                            print("Connection was refused! Wrong password!")
+                            self.stop_thread = True
+                    elif next_message == 'BAN':
+                        print('Connection refused because of ban!')
+                        self.client.close()
+                        self.stop_thread = True
+                else:
+                    print(message)
+            except:
+                print("An error occured!")
+                self.client.close()
+                break
 
-stop_thread = False
-
-def receive():
-    while True:
-        global stop_thread
-        if stop_thread:
-            break
-        try:
-            message = client.recv(1024).decode('ascii') #why recv(1024) and again why decode('ascii')
-            if message == 'NICK':
-                client.send(nickname.encode('ascii'))
-                next_message = client.recv(1024).decode('ascii')
-                if next_message == 'PASS':
-                    client.send(password.encode('ascii'))
-                    if client.recv(1024).decode('ascii') == 'REFUSE':
-                        print("Connection was refused! Wrong password!")
-                        stop_thread = True
-                elif next_message == 'BAN':
-                    print('Connection refused because of ban!')
-                    client.close()
-                    stop_thread = True
+    def write(self):
+        while True:
+            if self.stop_thread:
+                break
+            message = f'{self.nickname}: {input("")}'
+            if message[len(self.nickname)+2:].startswith('/'):
+                if self.nickname == 'admin':
+                    if message[len(self.nickname)+2:].startswith('/kick'):
+                        self.client.send(f'KICK {message[len(self.nickname)+2+6:]}'.encode('ascii'))
+                    elif message[len(self.nickname)+2:].startswith('/ban'):
+                        self.client.send(f'BAN {message[len(self.nickname)+2+5:]}'.encode('ascii'))
+                else:
+                    print("Command can only be executed by admin!")
             else:
-                print(message)
-        except:
-            print("An error occured!")
-            client.close()
-            break
+                self.client.send(message.encode('ascii'))
 
-def write():
-    while True:
-        if stop_thread:
-            break
-        message = f'{nickname}: {input("")}'
-        if message[len(nickname)+2:].startswith('/'):
-            if nickname == 'admin':
-                if message[len(nickname)+2:].startswith('/kick'):
-                    client.send(f'KICK {message[len(nickname)+2+6:]}'.encode('ascii'))
-                elif message[len(nickname)+2:].startswith('/ban'):
-                    client.send(f'BAN {message[len(nickname)+2+5:]}'.encode('ascii'))
-            else:
-                print("Command can only be executed by admin!")
-        else:
-            client.send(message.encode('ascii'))
+    def start(self):
+        receive_thread = threading.Thread(target=self.receive)
+        receive_thread.start()
 
-receive_thread = threading.Thread(target=receive)
-receive_thread.start()
+        write_thread = threading.Thread(target=self.write)
+        write_thread.start()
 
-write_thread = threading.Thread(target=write)
-write_thread.start()
+if __name__ == "__main__":
+    client = Client()
+    client.start()
